@@ -5,9 +5,10 @@ go 1.25.1
 tool github.com/spf13/cobra-cli
 
 require (
-	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
+	github.com/google/jsonschema-go v0.4.2
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

@@ -1,10 +1,10 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
-	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/spf13/cobra"
 )
 
@@ -31,7 +31,8 @@ var executeCmd = &cobra.Command{
 		}
 
 		// Read and unmarshal JSON input from stdin.
-		input, err := jsonschema.UnmarshalJSON(os.Stdin)
+		var input any
+		err = json.NewDecoder(os.Stdin).Decode(&input)
 		if err != nil {
 			return fmt.Errorf("reading stdin JSON: %w", err)
 		}
@@ -47,14 +48,4 @@ var executeCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(executeCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// executeCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// executeCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

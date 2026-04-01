@@ -1,42 +1,55 @@
-/*
-Copyright © 2026 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"text/template"
 
-	"github.com/santhosh-tekuri/jsonschema/v6"
+	"github.com/google/jsonschema-go/jsonschema"
+	"gopkg.in/yaml.v3"
 )
 
-// findSchemaFile looks for <name>.json then <name>.yaml in the given FS,
-// returning the filename of the first match or an error if neither exists.
-func findSchemaFile(templateFS fs.FS, name string) (string, error) {
-	for _, ext := range []string{".json", ".yaml"} {
+func loadSchema(templateFS fs.FS, name string) (*jsonschema.Resolved, error) {
+	for i, ext := range []string{".json", ".yaml"} {
 		candidate := name + ext
-		if _, err := fs.Stat(templateFS, candidate); err == nil {
-			return candidate, nil
+		contents, err := fs.ReadFile(templateFS, candidate)
+		if err != nil {
+			continue
 		}
+
+		isYAML := i > 0
+
+		if isYAML {
+			var yamlContents any
+			err := yaml.Unmarshal(contents, &yamlContents)
+			if err != nil {
+				return nil, fmt.Errorf("failed to unmarshal yaml schema file for %q: %w", name, err)
+			}
+
+			contents, err = json.Marshal(yamlContents)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert yaml schema file into json for %q: %w", name, err)
+			}
+		}
+
+		var schema jsonschema.Schema
+		if err := json.Unmarshal(contents, &schema); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal json schema for %q: %w", name, err)
+		}
+
+		resolvedSchema, err := schema.Resolve(nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve schema from %q: %w", name, err)
+		}
+
+		return resolvedSchema, nil
 	}
-	return "", fmt.Errorf("no schema file found for %q (looked for .json and .yaml)", name)
+
+	return nil, fmt.Errorf("no schema file found for %q (looked for .json and .yaml)", name)
 }
 
-// loadSchema finds and compiles the JSON schema for name from the given FS.
-func loadSchema(templateFS fs.FS, name string) (*jsonschema.Schema, error) {
-	schemaFile, err := findSchemaFile(templateFS, name)
-	if err != nil {
-		return nil, err
-	}
-
-	schema, err := jsonschema.NewCompiler().Compile(schemaFile)
-	if err != nil {
-		return nil, fmt.Errorf("compiling schema %q: %w", schemaFile, err)
-	}
-
-	return schema, nil
-}
+var tmplFuncs = template.FuncMap{}
 
 // loadTemplate reads and parses the Go template for name from the given FS.
 func loadTemplate(templateFS fs.FS, name string) (*template.Template, error) {
@@ -46,7 +59,8 @@ func loadTemplate(templateFS fs.FS, name string) (*template.Template, error) {
 		return nil, fmt.Errorf("reading template file %q: %w", tmplName, err)
 	}
 
-	tmpl, err := template.New(name).Parse(string(content))
+	tmpl := template.New(name).Funcs(tmplFuncs)
+	tmpl, err = tmpl.Parse(string(content))
 	if err != nil {
 		return nil, fmt.Errorf("parsing template %q: %w", tmplName, err)
 	}

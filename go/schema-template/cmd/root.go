@@ -47,7 +47,8 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.schema-template.yaml)")
 
 	defaultTemplateDir := filepath.Join(os.Args[0], "templates")
-	rootCmd.PersistentFlags().StringP("templates", "d", defaultTemplateDir, "Directory containing template files")
+	rootCmd.PersistentFlags().StringP("templates", "d", "", "Directory containing template files")
+	viper.SetDefault("templates", defaultTemplateDir)
 	viper.BindPFlags(rootCmd.PersistentFlags())
 }
 
