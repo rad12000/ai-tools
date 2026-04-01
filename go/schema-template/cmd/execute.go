@@ -39,7 +39,8 @@ var executeCmd = &cobra.Command{
 
 		// Validate input against the schema, then render the template.
 		if err := schema.Validate(input); err != nil {
-			return fmt.Errorf("validation failed: %w", err)
+			fmt.Fprintf(os.Stderr, "Input validation failed: %v\nTry running `%s get %s` to inspect the schema for this template", err, os.Args[0], name)
+			os.Exit(1)
 		}
 
 		return tmpl.Execute(os.Stdout, input)

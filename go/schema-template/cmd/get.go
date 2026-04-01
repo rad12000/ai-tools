@@ -33,7 +33,7 @@ var getCmd = &cobra.Command{
 
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
-		return enc.Encode(schema)
+		return enc.Encode(schema.Schema())
 	},
 }
 
