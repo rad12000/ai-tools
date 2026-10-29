@@ -17,13 +17,13 @@ jobs:
       run:
         working-directory: go/schema-template
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       # Conventional commits: `type!:` / BREAKING CHANGE -> major, feat -> minor, anything else -> patch.
       - id: version
-        uses: paulhatch/semantic-version@v5.4.0
+        uses: paulhatch/semantic-version@v6.0.0
         with:
           tag_prefix: schema-template/v
           change_path: go/schema-template
@@ -32,7 +32,7 @@ jobs:
           search_commit_body: true
           version_format: "${major}.${minor}.${patch}"
 
-      - uses: jdx/mise-action@v2
+      - uses: jdx/mise-action@v5
         with:
           working_directory: go/schema-template
 
