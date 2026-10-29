@@ -1,0 +1,46 @@
+name: schema-template release
+
+on:
+  push:
+    branches: [main]
+    paths: [go/schema-template/**]
+
+permissions:
+  contents: write
+
+concurrency: schema-template-release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: go/schema-template
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Conventional commits: `type!:` / BREAKING CHANGE -> major, feat -> minor, anything else -> patch.
+      - id: version
+        uses: paulhatch/semantic-version@v5.4.0
+        with:
+          tag_prefix: schema-template/v
+          change_path: go/schema-template
+          major_pattern: "/^\\w+(\\(.+\\))?!:|BREAKING CHANGE:/"
+          minor_pattern: "/^feat(\\(.+\\))?:/"
+          search_commit_body: true
+          version_format: "${major}.${minor}.${patch}"
+
+      - uses: jdx/mise-action@v2
+        with:
+          working_directory: go/schema-template
+
+      - name: Build
+        run: mise run build:release
+
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.version_tag }}
+        run: gh release create "$TAG" dist/schema-template_* --title "$TAG" --generate-notes --target "$GITHUB_SHA"

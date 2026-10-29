@@ -1,0 +1,5 @@
+monorepo_root = true
+
+[monorepo]
+# Locations that contain mise configs.
+config_roots = ["go", "go/schema-template"]
