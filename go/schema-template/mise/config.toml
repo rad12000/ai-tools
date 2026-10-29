@@ -1,0 +1,2 @@
+[tasks.build]
+run = "go build -ldflags=\"-s -w\" -trimpath -o dist/schema-template main.go"
